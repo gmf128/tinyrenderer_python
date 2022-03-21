@@ -14,7 +14,7 @@ class Camera:
         self.camera_angle = camera_angle
 
 class Shader:
-    light = np.zeros((3,1))
+    light = np.zeros((3, 1))
     def __init__(self, light):
         self.light = light
 
@@ -59,5 +59,5 @@ class PhongShader(Shader):
        @param zbuffer:
        @return:
        '''
-    # calculate bounding box
+       #     # calculate boundox
        return

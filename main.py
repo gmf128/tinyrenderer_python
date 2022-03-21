@@ -1,70 +1,39 @@
-import cv2 as cv
-import numpy as np
-import Geometry as geo
-import Model
-import Shader
-import math
-#参数设定
+# -*- coding: utf-8 -*-
+import Render
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 
-width = 512
-height = 512
-RGB = 3
-RGBA = 4
-GRAY = 1
-light = np.array([0., 0., -1.])
-camera_position = np.array([1, 1, 1])
-camera_look_at = geo.normalize(np.array([-1, -1, -1]))
-camera_up_dir = geo.normalize(np.array([2, 0, -2]))
-camera_angle = math.radians(50)
-camera = Shader.Camera(camera_position, camera_look_at, camera_up_dir, camera_angle)
+def show_image(image_path='test.png'):
+    app = QtWidgets.QApplication(sys.argv)
+    w = QWidget()
+    w.label = QLabel(w)
+    w.label.setText("   显示图片")
+    w.label.setFixedSize(1152, 1152)
+    w.label.move(0, 0)
+    w.label.setStyleSheet("QLabel{background:white;}"
+                             "QLabel{color:rgb(300,300,300,120);font-size:10px;font-weight:bold;font-family:宋体;}"
+                             )
+    #resize()方法调整窗口的大小。这离是250px宽150px高
+    w.resize(1152, 1152)
+    #move()方法移动窗口在屏幕上的位置到x = 300，y = 300坐标。
+    w.move(0, 0)
+    #设置窗口的标题
+    w.setWindowTitle('3D Viewer')
+    jpg = QtGui.QPixmap(image_path).scaled(w.label.width(), w.label.height())
+    w.label.setPixmap(jpg)
+    #显示在屏幕上
+    w.show()
+    sys.exit(app.exec_())
 
-#绘制函数
-#1.视图变换函数
-def world_to_screen(vert_cord, M):
-    return np.transpose(M@(vert_cord)
-    )
-
-
-#初始化
-image = np.ndarray((height, width, RGB), np.uint8)
-zbuffer = np.ndarray((height, width, GRAY), np.uint8)
-shader = Shader.PhongShader(light)
-for i in range(0,height):
-    for j in range(0, width):
-        image[i, j] = [0, 0, 0]
-        zbuffer[i, j] = [0]
-model = Model.MeshModel("african_head.obj")
-print(model.num_of_vertices())
-print(model.num_of_faces())
-#绘制
-#View Transformation
-M_transform = geo.M_viewport(width, height) @ geo.M_projection(model, camera, width, height) @ geo.M_camera(
-        camera_position, camera_look_at, camera_up_dir)
-
-for face in model.faces:
-    A = face.A
-    B = face.B
-    C = face.C
-    scr_par_A = world_to_screen(A.get_cord(), M_transform)
-    scr_par_B = world_to_screen(B.get_cord(), M_transform)
-    scr_par_C = world_to_screen(C.get_cord(), M_transform)
-    shader.triangle(scr_par_A, scr_par_B, scr_par_C, image, zbuffer)
-
-
-for vertex in model.vertices:
-    screen_result = geo.homogenilized(world_to_screen(vertex.get_cord(), M_transform))
-    #print(screen_result)
-    screen_cord = screen_result[0, 0:2]
-    if int(screen_cord[1]+1/2) < 0 or int(screen_cord[0]+1/2) < 0:
-        continue
-    if int(screen_cord[1]+1/2) > width or int(screen_cord[0]+1/2) > height:
-        continue
-    image[int(screen_cord[1]), int(screen_cord[0])] = [255, 255, 255]
-    zbuffer[int(screen_cord[1]), int(screen_cord[0])] = [int(screen_result[0, 2])]
-
-
-cv.imwrite("test.png", cv.flip(image, 0))
-cv.imwrite("zbuffer.png", cv.flip(zbuffer, 0))
+if __name__ == '__main__':
+    Renderer = Render.Renderer()
+    Renderer.render()
+    #显示窗口
+    show_image()
 
 
 '''进行图片属性定义
@@ -99,4 +68,6 @@ for vertex in model.vertices:
     zbuffer[int(screen_cord[1]), int(screen_cord[0])] = [int(screen_result[0, 2])]
 '''
 '''opencv采用的是BGR算法
+
+
 '''

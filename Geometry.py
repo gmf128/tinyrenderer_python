@@ -3,6 +3,7 @@ import math
 import numpy as np
 
 #视图变换矩阵
+
 def homogenilized(v):
     '''
     齐次坐标归一化
@@ -92,12 +93,13 @@ def M_projection(model, camera, width, height):
 #几何对象
 class vertex:
     #成员变量
-    cord = np.zeros((4, 1), np.float64)
+    cord = np.zeros((4, 1), np.float64)  # 4*1 的向量
     norm = np.array(3, np.float64)
     uv = np.array(2, np.float64)
+    screen_cord = np.zeros((1, 2), np.float64)  # 1*2 向量
     #成员函数
     def __init__(self, x, y, z):
-        self.cord = np.array([x, y, z, 1], np.float64).reshape((4,1))
+        self.cord = np.array([x, y, z, 1], np.float64).reshape((4, 1))
 
     def get_cord(self):
         '''
@@ -117,25 +119,51 @@ class vertex:
     def get_uv(self):
         return self.uv
 
+    def set_screencord(self, screen_cord):  # 2*1 array
+        self.screen_cord = screen_cord
+
 class face:
     #成员变量
-    vertex_set = [vertex(0, 0, 0), vertex(0, 0, 0), vertex(0, 0, 0)]
-    A = vertex_set[0]
-    B = vertex_set[1]
-    C = vertex_set[2]
+    A = vertex(0, 0, 0)
+    B = vertex(0, 0, 0)
+    C = vertex(0, 0, 0)
     norm = np.array(3, np.float64)
-    barycentric_cord = np.array(3, np.float64)
+    barycentric_cord = [0., 0., 0.]
 
     def __init__(self, v1, v2, v3):
         self.vertex_set = [v1, v2, v3]
+        self.A = v1
+        self.B = v2
+        self.C = v3
 
     def get_norm(self):
         '''
         计算出面的法向量
         @return: 面的法向量
         '''
-        AB = self.A.cord - self.B.cord
-        AC = self.A.cord - self.C.cord
+        AB = self.A.cord[0:3, 0] - self.B.cord[0:3, 0]    #3*1的向量
+        AC = self.A.cord[0:3, 0] - self.C.cord[0:3, 0]    #3*1的向量
         tempnorm = np.cross(AB, AC)
-        self.norm = np.linalg.norm(tempnorm)
+        self.norm = normalize(tempnorm)
+        return self.norm
 
+    def cal_barycentric(self, x, y):
+        AB = self.B.screen_cord - self.A.screen_cord
+        AC = self.C.screen_cord - self.A.screen_cord
+        s = np.cross(AB, AC)
+        P_cord = np.zeros((1, 2))
+        P_cord[0, 0] = x
+        P_cord[0, 1] = y
+        PA = self.A.screen_cord - P_cord
+        PB = self.B.screen_cord - P_cord
+        PC = self.C.screen_cord - P_cord
+        u = np.cross(PB, PC)/s
+        v = np.cross(PC, PA)/s
+        w = np.cross(PA, PB)/s
+        self.barycentric_cord[0] = u
+        self.barycentric_cord[1] = v
+        self.barycentric_cord[2] = w
+        if u > 0 and v > 0 and w > 0:
+            return True
+        else:
+            return False

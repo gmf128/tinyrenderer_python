@@ -16,7 +16,7 @@ class MeshModel(Model):
         本构造函数的主要目的是解析.obj文件
         @param filename: 输入的obj文件地址
         '''
-        objfile = open(filename,'r')
+        objfile = open(filename, 'r')
         while(1):
             self.errorcheck = self.errorcheck + 1
             tempString = objfile.readline()
@@ -35,7 +35,7 @@ class MeshModel(Model):
                 self.vert_uv.append(np.array([templist[1], templist[2]]))
             elif tempString.startswith("f "):
                 '''1.建立面'''
-                templist = re.split(r' |/',tempString)
+                templist = re.split(r' |/', tempString)
                 vertcord = list([templist[1], templist[4], templist[7]])
                 face = geo.face(self.getvertex(int(vertcord[0])), self.getvertex(int(vertcord[1])), self.getvertex(int(vertcord[2])))
                 self.faces.append(face)
